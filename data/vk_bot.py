@@ -84,10 +84,10 @@ def main():
     longpoll = VkBotLongPoll(vk_session, community_id)
 
     for event in longpoll.listen():
-
         if event.type == VkBotEventType.MESSAGE_NEW:
             reply = ''
             text = event.obj.message['text'].split()
+            print(event)
 
             if len(text) == 2 and text[0] == add_list['name']:  # add_list(dict), add_person(func)
                 status = add_person(event.obj.message['from_id'], text[1])
@@ -108,11 +108,17 @@ def main():
             elif len(text) == 1 and text[0] == bot_help['name']:  # bot_help(dict), command_help(func)
                 reply = command_help()
 
+            if reply == '':  # Handle an exception where the user doesn't use any commands
+                reply = "Sorry, I didn't understood your request"
+
             vk = vk_session.get_api()
             vk.messages.send(user_id=event.obj.message['from_id'], message=reply,
                              # Don't really know, what I should put here, so I put there a random num
                              random_id=random.randint(0, 2 ** 64))
 
 
-def run():
+if __name__ == '__main__':
     main()
+
+# def run():
+#     main()
