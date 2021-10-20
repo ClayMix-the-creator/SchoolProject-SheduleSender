@@ -5,9 +5,9 @@ import random
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 # Import of a file containing personal information. This file will not be included in the repo.
-from vk_token import vktoken, community_id
+from data.vk_token import vktoken, community_id
 
-con = sqlite3.connect('db/sendlist.sqlite')
+con = sqlite3.connect('../db/sendlist.sqlite')
 CUR = con.cursor()
 
 # Command list: (List can be increased by the time)
@@ -114,5 +114,5 @@ def main():
                              random_id=random.randint(0, 2 ** 64))
 
 
-if __name__ == '__main__':
+def run():
     main()
