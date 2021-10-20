@@ -1,7 +1,9 @@
-# Import python packages
-import vk_api
+# Import built-in python packages
 import sqlite3
 import random
+
+# Import downloaded python packages
+import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 # Import of a file containing personal information. This file will not be included in the repo.
@@ -83,14 +85,17 @@ def main():
 
     longpoll = VkBotLongPoll(vk_session, community_id)
 
+    print('VkBot is ready to work!\n')  # Print line to know if bot is ready
+
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             reply = ''
+            console_reply = None
             text = event.obj.message['text'].split()
-            print(event)
 
             if len(text) == 2 and text[0] == add_list['name']:  # add_list(dict), add_person(func)
                 status = add_person(event.obj.message['from_id'], text[1])
+                console_reply = 'add_person'
 
                 if status:
                     reply = add_list['positive_answer']
@@ -99,6 +104,7 @@ def main():
 
             elif len(text) == 1 and text[0] == remove_list['name']:  # remove_list(dict), remove_person(func)
                 status = remove_person(event.obj.message['from_id'])
+                console_reply = 'remove_person'
 
                 if status:
                     reply = remove_list['positive_answer']
@@ -107,9 +113,13 @@ def main():
 
             elif len(text) == 1 and text[0] == bot_help['name']:  # bot_help(dict), command_help(func)
                 reply = command_help()
+                console_reply = 'command_help'
 
             if reply == '':  # Handle an exception where the user doesn't use any commands
                 reply = "Sorry, I didn't understood your request"
+
+            print(event)  # Print lines to get info about bot activity
+            print(f'command = {console_reply}\n')
 
             vk = vk_session.get_api()
             vk.messages.send(user_id=event.obj.message['from_id'], message=reply,
