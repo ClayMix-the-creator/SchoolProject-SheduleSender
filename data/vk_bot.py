@@ -1,6 +1,7 @@
 # Import built-in python packages
 import sqlite3
 import random
+import os
 
 # Import downloaded python packages
 import vk_api
@@ -9,7 +10,10 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 # Import of a file containing personal information. This file will not be included in the repo.
 from data.vk_token import vktoken, community_id
 
-con = sqlite3.connect('../db/sendlist.sqlite')
+con = sqlite3.connect('db/sendlist.sqlite')
+# For this file the path should be '../db/sendlist.sqlite'
+# But for interface.py, which launches this file, it looks a little bit different
+
 CUR = con.cursor()
 
 # Command list: (List can be increased by the time)
@@ -19,7 +23,7 @@ CUR = con.cursor()
 #             'positive_answer': command_positive_answer,
 #             'negative_answer': command_negative_answer}
 
-add_list = {'name': '!Подписаться (Ваш_класс)',
+add_list = {'name': '!Подписаться',
             'description': 'подписаться на ежедневную рассылку расписания уроков. Например, !Подписаться 10Б',
             'positive_answer': 'Вы были успешно подписались на рассылку расписания!',
             'negative_answer': 'Вы уже были записаны на рассылку!'}
@@ -29,6 +33,10 @@ remove_list = {'name': '!Отписаться',
                'negative_answer': 'Вы не были записаны на рассылку'}
 bot_help = {'name': '!Помощь',
             'description': 'вывести все команды бота.'}
+
+
+def get_process_id() -> int:
+    return os.getpid()
 
 
 def command_help() -> str:
@@ -61,8 +69,8 @@ def remove_person(person_id: int) -> bool:
     """Removes id and grade of the person from the sendlist.
     In the future, the person will not receive a notification about the schedule update."""
 
-    request = f"DELETE FROM id_list WHERE person_id = {person_id})"
-    result = CUR.execute(f"SELECT * ALL FROM id_list WHERE person_id = {person_id}").fetchall()
+    request = f"DELETE FROM id_list WHERE person_id = {person_id}"
+    result = CUR.execute(f"SELECT * FROM id_list WHERE person_id = {person_id}").fetchall()
 
     if result:
         CUR.execute(request).fetchall()
@@ -85,7 +93,8 @@ def main():
 
     longpoll = VkBotLongPoll(vk_session, community_id)
 
-    print('VkBot is ready to work!\n')  # Print line to know if bot is ready
+    print('VkBot is ready to work!')  # Print line to know if bot is ready
+    print(f'Process id = {get_process_id()}')
 
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
@@ -118,8 +127,7 @@ def main():
             if reply == '':  # Handle an exception where the user doesn't use any commands
                 reply = "Sorry, I didn't understood your request"
 
-            print(event)  # Print lines to get info about bot activity
-            print(f'command = {console_reply}\n')
+            print(f"{event.obj.message['from_id']}\t{console_reply}")  # Print lines to get info about bot activity
 
             vk = vk_session.get_api()
             vk.messages.send(user_id=event.obj.message['from_id'], message=reply,
@@ -129,6 +137,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# def run():
-#     main()
