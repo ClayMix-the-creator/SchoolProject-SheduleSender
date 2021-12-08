@@ -1,7 +1,6 @@
 # Import built-in python packages
 import sqlite3
 import random
-import os
 
 # Import downloaded python packages
 import vk_api
@@ -220,11 +219,6 @@ def main():
     longpoll = VkBotLongPoll(vk_session, com_info['community_id'])
 
     print('VkBot is ready to work!')  # Print line to know if bot is ready
-
-    # Add the proccess id to kill it when the program is gonna be closed
-    request = f"""UPDATE settings SET value = '{os.getpid()}' WHERE "key" = 'proccess_id';"""
-    CUR.execute(request).fetchall()
-    con.commit()
 
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
