@@ -7,13 +7,7 @@ import os
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
-# Import of a file containing personal information. This file will not be included in the repo.
-from data.vk_token import vktoken, community_id
-
 con = sqlite3.connect('db/sendlist.sqlite')
-# For this file the path should be '../db/sendlist.sqlite'
-# But for interface.py, which launches this file, it looks a little bit different
-
 CUR = con.cursor()
 
 # Command list: (List can be increased by the time)
@@ -23,20 +17,18 @@ CUR = con.cursor()
 #             'positive_answer': command_positive_answer,
 #             'negative_answer': command_negative_answer}
 
-add_list = {'name': '!Подписаться',
-            'description': 'подписаться на ежедневную рассылку расписания уроков. Например, !Подписаться 10Б',
+add_list = {'name': '!Подписаться *класс*',
+            'description': 'подписаться на ежедневную рассылку расписания уроков. Например, !Подписаться 1А',
             'positive_answer': 'Вы были успешно подписались на рассылку расписания!',
             'negative_answer': 'Вы уже были записаны на рассылку!'}
+
 remove_list = {'name': '!Отписаться',
                'description': 'отписаться от ежедневной рассылки.',
                'positive_answer': 'Вы успешно отписались от рассылки расписания',
                'negative_answer': 'Вы не были записаны на рассылку'}
+
 bot_help = {'name': '!Помощь',
             'description': 'вывести все команды бота.'}
-
-
-def get_process_id() -> int:
-    return os.getpid()
 
 
 def command_help() -> str:
@@ -61,7 +53,6 @@ def add_person(person_id: int, person_grade: str) -> bool:
     else:
         CUR.execute(request).fetchall()
         con.commit()
-        con.close()
         return True
 
 
@@ -75,26 +66,54 @@ def remove_person(person_id: int) -> bool:
     if result:
         CUR.execute(request).fetchall()
         con.commit()
-        con.close()
         return True
     else:
         return False
 
 
+def get_community_info() -> dict:
+    d = {
+        'community_id': None,
+        'token': None
+    }
+
+    community_id_request = 'SELECT value FROM settings WHERE [key] = "community_id"'
+    community_id = CUR.execute(community_id_request).fetchall()[0][0]
+    d['community_id'] = community_id
+
+    token_request = 'SELECT value FROM settings WHERE [key] = "vktoken"'
+    token = CUR.execute(token_request).fetchall()[0][0]
+    d['token'] = token
+
+    return d
+
+
 def main():
-    """Main code of VkBot
-    It checks messages, that group receives and replies, depending on the command
-    Uses functions:
+    """Main code of VkBot that
+    Connecting to VK:
+    get_community_info()
+
+    Modifying database (soon):
+    create_table()
+    delete_table()
+
+    Checks messages, that group receives and replies, depending on the command:
     add_person()
     remove_person()
-    command_help()"""
+    command_help()
+    """
 
-    vk_session = vk_api.VkApi(token=vktoken)
+    com_info = get_community_info()
 
-    longpoll = VkBotLongPoll(vk_session, community_id)
+    vk_session = vk_api.VkApi(token=com_info['token'])
+    longpoll = VkBotLongPoll(vk_session, com_info['community_id'])
 
     print('VkBot is ready to work!')  # Print line to know if bot is ready
-    print(f'Process id = {get_process_id()}')
+
+    # Add the proccess id to kill it when the program is gonna be closed
+    request = f"""UPDATE settings SET value = '{os.getpid()}' WHERE "key" = 'proccess_id';"""
+    CUR.execute(request).fetchall()
+    con.commit()
 
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
@@ -124,7 +143,7 @@ def main():
                 reply = command_help()
                 console_reply = 'command_help'
 
-            if reply == '':  # Handle an exception where the user doesn't use any commands
+            else:  # Handle an exception where the user didn't use any commands
                 reply = "Sorry, I didn't understood your request"
 
             print(f"{event.obj.message['from_id']}\t{console_reply}")  # Print lines to get info about bot activity
