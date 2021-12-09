@@ -42,6 +42,8 @@ remove_class_dict = {'name': '!Удалить класс *класс*',
 
 
 def change_vktoken(token: str) -> bool:
+    """Changing a value of vktoken in database"""
+
     request = f"UPDATE settings SET value = '{token}' WHERE [key] = 'vktoken'"
 
     CUR.execute(request).fetchall()
@@ -51,6 +53,8 @@ def change_vktoken(token: str) -> bool:
 
 
 def change_community_id(community_id: str) -> bool:
+    """Changing a value of community id in database"""
+
     request = f"UPDATE settings SET value = '{community_id}' WHERE [key] = 'community_id'"
 
     CUR.execute(request).fetchall()
@@ -70,6 +74,8 @@ def command_help_func() -> str:
 
 
 def admin_command_help_func() -> str:
+    """Returns a text with extra commands for admins"""
+
     text = f"\nКоманды АДминистратора:\n" \
            f"{add_class_dict['name']} - {add_class_dict['description']}\n" \
            f"{remove_class_dict['name']} - {remove_class_dict['description']}"
@@ -107,6 +113,8 @@ def remove_person_func(person_id: int) -> bool:
 
 
 def get_community_info() -> dict:
+    """Returns vktoken and community id as dictionary"""
+
     d = {
         'community_id': None,
         'token': None
@@ -124,6 +132,8 @@ def get_community_info() -> dict:
 
 
 def get_admins() -> set:
+    """Returns a list of bot administrators id as a set """
+
     request = 'SELECT user_id FROM administrators'
 
     admins = CUR.execute(request).fetchall()
@@ -135,6 +145,9 @@ def get_admins() -> set:
 
 
 def add_admin_func(user_id) -> bool:
+    """Adds an id of person to list of administrators. Not used in main().
+    Created to make it easy to add a new admin to the list"""
+
     if user_id in get_admins():
         return False
 
@@ -147,6 +160,9 @@ def add_admin_func(user_id) -> bool:
 
 
 def remove_admin_func(user_id) -> bool:
+    """Removes an id of admin from list of administrators. Not used in main().
+    Created to make it easy to remove admins from the list"""
+
     if user_id in get_admins():
         request = f'DELETE FROM administrators WHERE user_id = {user_id}'
 
@@ -159,6 +175,9 @@ def remove_admin_func(user_id) -> bool:
 
 
 def add_class_func(table_name: str) -> bool:
+    """Creates a new table in the database called {table_name} if it doesn't exists.
+    Adds in the table {max_lessons_amount} lessons values (default == Null)"""
+
     max_lessons_amount = 8
     try:
         request = f'SELECT * FROM [{table_name}]'
@@ -179,6 +198,8 @@ def add_class_func(table_name: str) -> bool:
 
 
 def remove_class_func(table_name: str) -> bool:
+    """Removes a table in the database called {table_name}"""
+
     try:
         request = f'SELECT * FROM [{table_name}]'
         CUR.execute(request).fetchall()
