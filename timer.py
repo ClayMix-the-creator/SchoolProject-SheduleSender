@@ -50,7 +50,7 @@ def timer_disable() -> bool:
     return True
 
 
-def update_minutes(minutes: int) -> bool:
+def update_delay(minutes: int) -> bool:
     """Sets the update_minutes to {minutes}"""
 
     request = f"UPDATE settings SET value = '{minutes}' WHERE [key] = 'timer_enable'"
@@ -61,13 +61,21 @@ def update_minutes(minutes: int) -> bool:
     return True
 
 
-def get_minutes_pause() -> int:
+def get_minutes_delay() -> int:  # Sooner, this func will be re refactored
     """Returns a timer delay in minutes from database"""
 
     request = "SELECT value FROM settings WHERE [key] = 'update_minutes'"
     minutes = CUR.execute(request).fetchall()[0][0]
 
-    return minutes
+    return minutes #
+
+
+def change_type_delay() -> bool:
+    pass
+
+
+def get_type_delay() -> str:
+    pass
 
 
 def timer():
