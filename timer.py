@@ -67,7 +67,7 @@ def get_minutes_delay() -> int:  # Sooner, this func will be re refactored
     request = "SELECT value FROM settings WHERE [key] = 'update_minutes'"
     minutes = CUR.execute(request).fetchall()[0][0]
 
-    return minutes #
+    return minutes
 
 
 def change_type_delay() -> bool:
