@@ -1,1 +1,2 @@
-# This .py will download shedule.xls from website using "requests"
+# Import built-in packages
+import requests
