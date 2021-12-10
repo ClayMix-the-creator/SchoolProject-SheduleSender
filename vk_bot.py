@@ -9,6 +9,8 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 con = sqlite3.connect('db/sendlist.sqlite')
 CUR = con.cursor()
 
+# Sooner, I'll move theese commands to db
+
 # Command list: (List can be increased by the time)
 # variable = {'name': command_name,
 #             'description': command_description}
@@ -44,7 +46,7 @@ remove_class_dict = {'name': '!Удалить класс *класс*',
 def change_vktoken(token: str) -> bool:
     """Changing a value of vktoken in database"""
 
-    request = f"UPDATE settings SET value = '{token}' WHERE [key] = 'vktoken'"
+    request = f"UPDATE vkbot SET value = '{token}' WHERE setting = 'vktoken'"
 
     CUR.execute(request).fetchall()
     con.commit()
@@ -55,7 +57,7 @@ def change_vktoken(token: str) -> bool:
 def change_community_id(community_id: str) -> bool:
     """Changing a value of community id in database"""
 
-    request = f"UPDATE settings SET value = '{community_id}' WHERE [key] = 'community_id'"
+    request = f"UPDATE vkbot SET value = '{community_id}' WHERE setting = 'community_id'"
 
     CUR.execute(request).fetchall()
     con.commit()
@@ -76,7 +78,7 @@ def command_help_func() -> str:
 def admin_command_help_func() -> str:
     """Returns a text with extra commands for admins"""
 
-    text = f"\nКоманды АДминистратора:\n" \
+    text = f"\nКоманды Администратора:\n" \
            f"{add_class_dict['name']} - {add_class_dict['description']}\n" \
            f"{remove_class_dict['name']} - {remove_class_dict['description']}"
     return text
@@ -120,11 +122,11 @@ def get_community_info() -> dict:
         'token': None
     }
 
-    community_id_request = 'SELECT value FROM settings WHERE [key] = "community_id"'
+    community_id_request = 'SELECT value FROM vkbot WHERE setting = "community_id"'
     community_id = CUR.execute(community_id_request).fetchall()[0][0]
     d['community_id'] = community_id
 
-    token_request = 'SELECT value FROM settings WHERE [key] = "vktoken"'
+    token_request = 'SELECT value FROM vkbot WHERE setting = "vktoken"'
     token = CUR.execute(token_request).fetchall()[0][0]
     d['token'] = token
 
@@ -185,7 +187,7 @@ def add_class_func(table_name: str) -> bool:
 
         return False
     except Exception as e:
-        request = f'CREATE TABLE [{table_name}] (id INTEGER PRIMARY KEY AUTOINCREMENT, lesson STRING)'
+        request = f'CREATE TABLE [{table_name}] (lesson STRING)'
         CUR.execute(request)
         con.commit()
 
@@ -323,7 +325,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # change_vktoken()
-    # change_community_id()
-    # add_admin_func()
+    change_vktoken()
+    change_community_id()
     main()
