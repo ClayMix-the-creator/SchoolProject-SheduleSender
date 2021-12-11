@@ -9,35 +9,41 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 con = sqlite3.connect('db/sendlist.sqlite')
 CUR = con.cursor()
 
-# Sooner, I'll move theese commands to db
+# Sooner, I'll move these commands to db
 
 # Command list: (List can be increased by the time)
-# variable = {'name': command_name,
+# variable = {'command': command,
+#             'to_use': command_name,
 #             'description': command_description}
 #             if need:
 #             'positive_answer': command_positive_answer,
-#             'negative_answer': command_negative_answer}
+#             'negative_answer': command_negative_answer,}
 
-add_person_dict = {'name': '!Подписаться *класс*',
+add_person_dict = {'command': '!Подписаться',
+                   'to_use': '!Подписаться *класс*',
                    'description': 'подписаться на ежедневную рассылку расписания уроков. Например, "!Подписаться 1А"',
                    'positive_answer': 'Вы были успешно подписались на рассылку расписания!',
                    'negative_answer': 'Вы уже были записаны на рассылку!'}
 
-remove_person_dict = {'name': '!Отписаться',
+remove_person_dict = {'command': '!Отписаться',
+                      'to_use': '!Отписаться',
                       'description': 'отписаться от ежедневной рассылки.',
                       'positive_answer': 'Вы успешно отписались от рассылки расписания',
                       'negative_answer': 'Вы не были записаны на рассылку'}
 
-command_help_dict = {'name': '!Помощь',
+command_help_dict = {'command': '!Помощь',
+                     'to_use': '!Помощь',
                      'description': 'вывести все команды бота.'}
 
 # Extra commands for Admins
-add_class_dict = {'name': '!Добавить класс *класс*',
+add_class_dict = {'command': '!Добавить',
+                  'to_use': '!Добавить класс *класс*',
                   'description': 'добавить в базу данных таблицу с уроками данного класса. Например, "!Добавить класс 1А"',
                   'positive_answer': 'Таблица была успешно добавлена в базу данных',
                   'negative_answer': 'Произошла ошибка при добавлении таблицы в базу данных'}
 
-remove_class_dict = {'name': '!Удалить класс *класс*',
+remove_class_dict = {'command': '!Удалить',
+                     'to_use': '!Удалить класс *класс*',
                      'description': 'убрать из базы данных таблицу с уроками данного класса. Например, "!Удалить класс 1А"',
                      'positive_answer': 'Таблица была успешно удалена из базы данных',
                      'negative_answer': 'Произошла ошибка при удалении таблицы из базы данных'}
@@ -48,7 +54,7 @@ def change_vktoken(token: str) -> bool:
 
     request = f"UPDATE vkbot SET value = '{token}' WHERE setting = 'vktoken'"
 
-    CUR.execute(request).fetchall()
+    CUR.execute(request)
     con.commit()
 
     return True
@@ -59,7 +65,7 @@ def change_community_id(community_id: str) -> bool:
 
     request = f"UPDATE vkbot SET value = '{community_id}' WHERE setting = 'community_id'"
 
-    CUR.execute(request).fetchall()
+    CUR.execute(request)
     con.commit()
 
     return True
@@ -69,9 +75,9 @@ def command_help_func() -> str:
     """Returns a text with bot commands"""
 
     text = f'Команды бота-рассыльщика:\n' \
-           f"{add_person_dict['name']} - {add_person_dict['description']}\n" \
-           f"{remove_person_dict['name']} - {remove_person_dict['description']}\n" \
-           f"{command_help_dict['name']} - {command_help_dict['description']}"
+           f"{add_person_dict['to_use']} - {add_person_dict['description']}\n" \
+           f"{remove_person_dict['to_use']} - {remove_person_dict['description']}\n" \
+           f"{command_help_dict['to_use']} - {command_help_dict['description']}"
     return text
 
 
@@ -79,8 +85,8 @@ def admin_command_help_func() -> str:
     """Returns a text with extra commands for admins"""
 
     text = f"\nКоманды Администратора:\n" \
-           f"{add_class_dict['name']} - {add_class_dict['description']}\n" \
-           f"{remove_class_dict['name']} - {remove_class_dict['description']}"
+           f"{add_class_dict['to_use']} - {add_class_dict['description']}\n" \
+           f"{remove_class_dict['to_use']} - {remove_class_dict['description']}"
     return text
 
 
@@ -94,7 +100,7 @@ def add_person_func(person_id: int, person_grade: str) -> bool:
     if result:
         return False
     else:
-        CUR.execute(request).fetchall()
+        CUR.execute(request)
         con.commit()
         return True
 
@@ -107,7 +113,7 @@ def remove_person_func(person_id: int) -> bool:
     result = CUR.execute(f"SELECT * FROM id_list WHERE person_id = {person_id}").fetchall()
 
     if result:
-        CUR.execute(request).fetchall()
+        CUR.execute(request)
         con.commit()
         return True
     else:
@@ -137,7 +143,6 @@ def get_admins() -> set:
     """Returns a list of bot administrators id as a set """
 
     request = 'SELECT user_id FROM administrators'
-
     admins = CUR.execute(request).fetchall()
 
     for i in range(len(admins)):
@@ -155,7 +160,7 @@ def add_admin_func(user_id) -> bool:
 
     request = f'INSERT INTO administrators (user_id) VALUES ({user_id})'
 
-    CUR.execute(request).fetchall()
+    CUR.execute(request)
     con.commit()
 
     return True
@@ -168,7 +173,7 @@ def remove_admin_func(user_id) -> bool:
     if user_id in get_admins():
         request = f'DELETE FROM administrators WHERE user_id = {user_id}'
 
-        CUR.execute(request).fetchall()
+        CUR.execute(request)
         con.commit()
 
         return True
@@ -187,13 +192,15 @@ def add_class_func(table_name: str) -> bool:
 
         return False
     except Exception as e:
-        request = f'CREATE TABLE [{table_name}] (lesson STRING)'
+        request = f'CREATE TABLE [{table_name}] (lessons STRING)'
         CUR.execute(request)
-        con.commit()
 
-        request = f'INSERT INTO [{table_name}] (lesson) VALUES (NULL)'
+        request = f'INSERT INTO classes_table (classes) VALUES ("{table_name}")'
+        CUR.execute(request)
+
+        request = f'INSERT INTO [{table_name}] (lessons) VALUES (NULL)'
         for i in range(max_lessons_amount):
-            CUR.execute(request).fetchall()
+            CUR.execute(request)
         con.commit()
 
         return True
@@ -206,8 +213,11 @@ def remove_class_func(table_name: str) -> bool:
         request = f'SELECT * FROM [{table_name}]'
         CUR.execute(request).fetchall()
 
+        request = f'DELETE FROM classes_table WHERE classes = "{table_name}"'
+        CUR.execute(request)
+
         request = f'DROP TABLE [{table_name}]'
-        CUR.execute(request).fetchall()
+        CUR.execute(request)
 
         con.commit()
 
@@ -238,8 +248,12 @@ def main():
 
     com_info = get_community_info()
 
-    vk_session = vk_api.VkApi(token=com_info['token'])
-    longpoll = VkBotLongPoll(vk_session, com_info['community_id'])
+    try:
+        vk_session = vk_api.VkApi(token=com_info['token'])
+        longpoll = VkBotLongPoll(vk_session, com_info['community_id'])
+    except Exception as e:
+        print(e)
+        return
 
     print('VkBot is ready to work!')  # Print line to know if bot is ready
 
@@ -250,7 +264,7 @@ def main():
             user_id = event.obj.message['from_id']
             text = event.obj.message['text'].split()
 
-            if len(text) == 2 and text[0] == add_person_dict['name'].split()[0]:  # add_person_dict, add_person_func
+            if text[0] == add_person_dict['command']:  # add_person_dict, add_person_func
                 status = add_person_func(event.obj.message['from_id'], text[1])
                 console_reply = 'add_person -> '
 
@@ -261,7 +275,7 @@ def main():
                     reply = add_person_dict['negative_answer']
                     console_reply += 'Error'
 
-            elif len(text) == 1 and text[0] == remove_person_dict['name'].split()[0]:  # remove_person_dict, remove_person_func
+            elif text[0] == remove_person_dict['command']:  # remove_person_dict, remove_person_func
                 status = remove_person_func(event.obj.message['from_id'])
                 console_reply = 'remove_person -> '
 
@@ -272,7 +286,7 @@ def main():
                     reply = remove_person_dict['negative_answer']
                     console_reply += 'Error'
 
-            elif len(text) == 1 and text[0] == command_help_dict['name']:  # command_help_dict, command_help_func
+            elif text[0] == command_help_dict['command']:  # command_help_dict, command_help_func, admin_command_help_func
                 reply = command_help_func()
                 console_reply = 'command_help'
 
@@ -280,7 +294,7 @@ def main():
                     reply += admin_command_help_func()
                     console_reply = 'admin.' + console_reply
 
-            elif len(text) == 3 and [text[0], text[1]] == add_class_dict['name'].split()[0:2]:  # add_class_dict, add_class_func
+            elif text[0] == add_class_dict['command']:  # add_class_dict, add_class_func
                 if user_id in get_admins():
                     status = add_class_func(text[2])
                     console_reply = 'admin.add_class -> '
@@ -297,7 +311,7 @@ def main():
                     reply = 'Вы не имеете достаточно прав, для использования данной команды'
                     console_reply = 'user.add_class -> access denied'
 
-            elif len(text) == 3 and [text[0], text[1]] == remove_class_dict['name'].split()[0:2]:  # remove_class_dict, remove_class_func
+            elif text[0] == remove_class_dict['command']:  # remove_class_dict, remove_class_func
                 if user_id in get_admins():
                     status = remove_class_func(text[2])
                     console_reply = 'admin.remove_class -> '
@@ -325,6 +339,4 @@ def main():
 
 
 if __name__ == '__main__':
-    change_vktoken()
-    change_community_id()
     main()
