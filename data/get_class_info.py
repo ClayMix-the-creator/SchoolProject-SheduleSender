@@ -1,6 +1,9 @@
 # Import downloaded packages
 import pandas as pd
 
+# Import project files
+from data.dowload_excel_file import download
 
-def class_info(request_type: ['API', 'manual'], class_name: str) -> list:
+
+def get_lessons() -> list:
     pass
