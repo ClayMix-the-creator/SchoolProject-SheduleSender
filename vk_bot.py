@@ -37,8 +37,8 @@ command_help_dict = {'command': '!Помощь',
 
 # Extra commands for Admins
 add_class_dict = {'command': '!Добавить',
-                  'to_use': '!Добавить класс *класс*',
-                  'description': 'добавить в базу данных таблицу с уроками данного класса. Например, "!Добавить класс 1А"',
+                  'to_use': '!Добавить класс *класс* *максимальное количество уроков*',
+                  'description': 'добавить в базу данных таблицу с уроками данного класса. Например, "!Добавить класс 1А 5"',
                   'positive_answer': 'Таблица была успешно добавлена в базу данных',
                   'negative_answer': 'Произошла ошибка при добавлении таблицы в базу данных'}
 
@@ -129,11 +129,11 @@ def get_community_info() -> dict:
     }
 
     community_id_request = 'SELECT value FROM vkbot WHERE setting = "community_id"'
-    community_id = CUR.execute(community_id_request).fetchall()[0][0]
+    community_id = CUR.execute(community_id_request).fetchone()[0]
     d['community_id'] = community_id
 
     token_request = 'SELECT value FROM vkbot WHERE setting = "vktoken"'
-    token = CUR.execute(token_request).fetchall()[0][0]
+    token = CUR.execute(token_request).fetchone()[0]
     d['token'] = token
 
     return d
@@ -181,25 +181,31 @@ def remove_admin_func(user_id) -> bool:
     return False
 
 
-def add_class_func(table_name: str) -> bool:
+def get_classes() -> set:
+    request = 'SELECT classes FROM classes_table'
+    result = [i[0] for i in CUR.execute(request).fetchall()]
+
+    return set(result)
+
+
+def add_class_func(table_name: str, max_amount: int) -> bool:
     """Creates a new table in the database called {table_name} if it doesn't exists.
     Adds in the table {max_lessons_amount} lessons values (default == Null)"""
 
-    max_lessons_amount = 8
     try:
         request = f'SELECT * FROM [{table_name}]'
         CUR.execute(request).fetchall()
 
         return False
     except Exception as e:
-        request = f'CREATE TABLE [{table_name}] (lessons STRING)'
+        request = f'CREATE TABLE [{table_name}] (id INTEGER PRIMARY KEY AUTOINCREMENT, lessons STRING)'
         CUR.execute(request)
 
         request = f'INSERT INTO classes_table (classes) VALUES ("{table_name}")'
         CUR.execute(request)
 
         request = f'INSERT INTO [{table_name}] (lessons) VALUES (NULL)'
-        for i in range(max_lessons_amount):
+        for i in range(max_amount):
             CUR.execute(request)
         con.commit()
 
@@ -264,7 +270,7 @@ def main():
             user_id = event.obj.message['from_id']
             text = event.obj.message['text'].split()
 
-            if text[0] == add_person_dict['command']:  # add_person_dict, add_person_func
+            if len(text) == 2 and text[0] == add_person_dict['command']:  # add_person_dict, add_person_func
                 status = add_person_func(event.obj.message['from_id'], text[1])
                 console_reply = 'add_person -> '
 
@@ -291,12 +297,12 @@ def main():
                 console_reply = 'command_help'
 
                 if user_id in get_admins():
-                    reply += admin_command_help_func()
+                    reply += '\n' + admin_command_help_func()
                     console_reply = 'admin.' + console_reply
 
             elif text[0] == add_class_dict['command']:  # add_class_dict, add_class_func
                 if user_id in get_admins():
-                    status = add_class_func(text[2])
+                    status = add_class_func(text[2], int(text[3]))
                     console_reply = 'admin.add_class -> '
 
                     if status:
@@ -339,4 +345,7 @@ def main():
 
 
 if __name__ == '__main__':
+    # add_admin_func(admin)
+    # change_vktoken('some_token')
+    # change_community_id('some_id')
     main()
